@@ -7,6 +7,14 @@ from llama_index.core.tools import QueryEngineTool, ToolMetadata
 from llama_index.core.agent import ReActAgent
 from dotenv import load_dotenv
 
+from prompts import context
+from code_reader import code_reader
+
+from pydantic import BaseModel
+from llama_index.core.output_parsers import PydanticOutputParser
+from llama_index.core.query_pipeline import QueryPipeline
+from prompts import code_parser_template
+
 load_dotenv()
 
 llm = Ollama(model="mistral",request_timeout=3600.0) #potato pcs require more time to churn the data chunks
