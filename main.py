@@ -38,3 +38,51 @@ tools = [
 code_llm=Ollama(model="codellama") #the model used by agent to generate code
 
 agent=ReActAgent.from_tools(tools,llm=code_llm,verbose=True, context="") #verbose gives the thought process of the agent
+#to check the code_reader and agent functionality
+"""while(prompt:=input("Enter prompt (press q to quit)"))!="q":
+    result=agent.query(prompt) #read the contents of test.py and explain what it does 
+    print(result)"""
+
+
+class CodeOutput(BaseModel): #creating a pydantic object
+    code:str
+    description:str
+    filename:str
+
+parser=PydanticOutputParser(CodeOutput)
+json_prompt_str=parser.format(code_parser_template)#adds the pydantic object to end of prompt, which means required o/p format
+json_prompt_tmplate=PromptTemplate(json_prompt_str)# thsis would be the {response} in code_parser_template
+output_pipeline=QueryPipeline(chain=[json_prompt_tmplate,llm])
+
+while(prompt:=input("Enter prompt (press q to quit)"))!="q":
+    retries=0
+    while retries<50:
+        try:
+
+            result=agent.query(prompt)
+            next_result=output_pipeline.run(response=result)
+            print(result)
+            print(next_result)
+            cleaned_json=ast.literal_eval(str(next_result).replace("assistant:",""))# to remove the assistant term in the dictionary o/p
+        #cleaned_json gives a dicitonary
+            break
+        except Exception as e:
+            retries+=1
+            print(f"Error occured: retry#{retries}:",e) 
+
+    if retries>=50:
+        print("Try Again with a better prompt")
+        continue
+
+    print("Code Generated")
+    print(cleaned_json["code"])
+    print("\n\nDescription: ",cleaned_json["description"])
+    filename=cleaned_json["filename"]
+
+    #saving the generated code to a file
+    try:
+        with open(os.path.join("output",filename),"w") as f:
+            f.write(cleaned_json["code"])
+        print("File saved", filename)
+    except:
+        print("Error in saving the file")
