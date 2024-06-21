@@ -15,6 +15,9 @@ from llama_index.core.output_parsers import PydanticOutputParser
 from llama_index.core.query_pipeline import QueryPipeline
 from prompts import code_parser_template
 
+import ast #to load the python code
+import os
+
 load_dotenv()
 
 llm = Ollama(model="mistral",request_timeout=3600.0) #potato pcs require more time to churn the data chunks
